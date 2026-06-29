@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOCO — Дашборд продажів 2025-2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--blue:#1B79C0;--bright:#02ABED;--pale:#D8F6FF;--dark:#0A1E3D;--ink:#2C3E50;--grey:#64748B;--light:#F0F6FC;--white:#FFFFFF;--green:#27AE60;--orange:#E67E22;--red:#E74C3C;--purple:#8E44AD;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#F4F7FB;font-family:'Segoe UI',Arial,sans-serif;color:var(--ink);}
+.nav{background:var(--dark);padding:0 32px;display:flex;align-items:center;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.nav-logo{font-size:18px;font-weight:800;color:#fff;letter-spacing:1px;margin-right:32px;padding:16px 0;}
+.nav-logo span{color:var(--bright);}
+.nav-tab{padding:18px 22px;font-size:13px;font-weight:600;color:rgba(255,255,255,.55);cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;transition:all .2s;letter-spacing:.3px;}
+.nav-tab:hover{color:rgba(255,255,255,.85);}
+.nav-tab.active{color:var(--bright);border-bottom-color:var(--bright);}
+.page{display:none;padding:28px 32px 48px;}
+.page.active{display:block;}
+.page-header{margin-bottom:24px;}
+.page-header h1{font-size:22px;font-weight:700;color:var(--dark);margin-bottom:4px;}
+.page-header p{font-size:13px;color:var(--grey);}
+.kpi-row{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
+.kpi{flex:1;min-width:180px;background:#fff;border-radius:14px;padding:20px 22px;box-shadow:0 2px 12px rgba(27,121,192,.08);border-left:4px solid var(--blue);}
+.kpi-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--grey);margin-bottom:8px;}
+.kpi-val{font-size:28px;font-weight:800;color:var(--dark);line-height:1;margin-bottom:4px;}
+.kpi-sub{font-size:12px;color:var(--grey);}
+.chart-card{background:#fff;border-radius:16px;padding:24px 28px;box-shadow:0 2px 12px rgba(27,121,192,.08);margin-bottom:20px;}
+.chart-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.chart-card-header h2{font-size:15px;font-weight:700;color:var(--dark);}
+.chart-card-header p{font-size:12px;color:var(--grey);margin-top:2px;}
+.chart-wrap{position:relative;height:300px;}
+.chart-wrap-tall{position:relative;height:400px;}
+.toggle-group{display:flex;gap:4px;background:#F0F4F8;border-radius:8px;padding:3px;}
+.toggle-btn{padding:5px 14px;font-size:12px;font-weight:600;border:none;border-radius:6px;cursor:pointer;background:transparent;color:var(--grey);transition:all .2s;}
+.toggle-btn.active{background:#fff;color:var(--blue);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{background:var(--dark);color:#fff;padding:10px 14px;text-align:left;font-weight:600;font-size:11px;letter-spacing:.5px;}
+td{padding:9px 14px;border-bottom:1px solid #EEF2F7;color:var(--ink);}
+tr:hover td{background:#F8FAFE;}
+.td-num{text-align:right;font-weight:600;color:var(--dark);}
+.td-cat{font-weight:600;color:var(--blue);}
+.legend-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--grey);}
+.legend-dot{width:12px;height:12px;border-radius:50%;}
+.target-bar{background:var(--light);border-radius:10px;padding:16px 20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;}
+.target-item{font-size:13px;}
+.target-label{color:var(--grey);font-weight:500;}
+.target-val{color:var(--blue);font-weight:700;font-size:16px;margin-left:6px;}
+@media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-logo">SO<span>C</span>O</div>
+  <button class="nav-tab active" onclick="showPage('dash1',this)">&#128202; Динаміка продажів</button>
+  <button class="nav-tab" onclick="showPage('dash2',this)">&#128194; По категоріях</button>
+  <button class="nav-tab" onclick="showPage('dash3',this)">&#128302; Прогноз 2026</button>
+</nav>
+
+<div class="page active" id="dash1">
+  <div class="page-header"><h1>Динаміка продажів — Чер 2025 – Тра 2026</h1><p>Завершені замовлення · усі категорії</p></div>
+  <div class="kpi-row">
+    <div class="kpi" style="border-color:var(--blue)"><div class="kpi-label">Загальна виручка</div><div class="kpi-val" id="k1">—</div><div class="kpi-sub">за 12 місяців</div></div>
+    <div class="kpi" style="border-color:var(--green)"><div class="kpi-label">Кількість замовлень</div><div class="kpi-val" id="k2">—</div><div class="kpi-sub">завершених</div></div>
+    <div class="kpi" style="border-color:var(--orange)"><div class="kpi-label">Середній чек</div><div class="kpi-val" id="k3">—</div><div class="kpi-sub">без оптових >100к ₴</div></div>
+    <div class="kpi" style="border-color:var(--purple)"><div class="kpi-label">Найкращий місяць</div><div class="kpi-val" id="k4">—</div><div class="kpi-sub" id="k4m">—</div></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div><h2>Виручка по місяцях (млн ₴)</h2><p>Загальна сума завершених замовлень</p></div></div>
+    <div class="chart-wrap-tall"><canvas id="c1"></canvas></div>
+  </div>
+  <div class="two-col">
+    <div class="chart-card"><div class="chart-card-header"><div><h2>Кількість замовлень</h2><p>По місяцях</p></div></div><div class="chart-wrap"><canvas id="c2"></canvas></div></div>
+    <div class="chart-card"><div class="chart-card-header"><div><h2>Кількість одиниць товару</h2><p>Загальна кількість позицій</p></div></div><div class="chart-wrap"><canvas id="c3"></canvas></div></div>
+  </div>
+</div>
+
+<div class="page" id="dash2">
+  <div class="page-header"><h1>Продажі по категоріях</h1><p>Розбивка по місяцях та категоріях товарів</p></div>
+  <div class="kpi-row" id="cat-kpis"></div>
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div><h2>Виручка по категоріях (млн ₴)</h2><p>Стекований графік — структура продажів</p></div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" onclick="setCatMode('revenue',this)">Сума</button>
+        <button class="toggle-btn" onclick="setCatMode('qty',this)">Кількість</button>
+      </div>
+    </div>
+    <div class="chart-wrap-tall"><canvas id="c4"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div><h2>Структура за рік — Топ категорій</h2><p>Частка у загальній виручці</p></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center;">
+      <div style="height:320px;position:relative;"><canvas id="c5"></canvas></div>
+      <div id="cat-tbl" class="table-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="dash3">
+  <div class="page-header"><h1>Прогноз продажів — Чер – Гру 2026</h1><p>Цільовий ріст +10–20% до аналогічного місяця 2025 р.</p></div>
+  <div class="target-bar">
+    <div class="target-item"><span class="target-label">Ціль +10%:</span><span class="target-val" id="f1">—</span></div>
+    <div class="target-item"><span class="target-label">Ціль +20%:</span><span class="target-val" id="f2">—</span></div>
+    <div class="target-item"><span class="target-label">Факт за Чер–Гру 2025:</span><span class="target-val" id="f3">—</span></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div><h2>Загальна виручка: факт + прогноз (млн ₴)</h2><p>Синя лінія — факт · Зелений коридор — прогноз</p></div></div>
+    <div class="chart-wrap-tall"><canvas id="c6"></canvas></div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:#1B79C0"></div>Факт</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(39,174,96,.6)"></div>Прогноз +10%</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#27AE60"></div>Прогноз +20%</div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div><h2>Прогноз по категоріях — ціль +15% (млн ₴)</h2><p>Середній сценарій</p></div></div>
+    <div class="chart-wrap-tall"><canvas id="c7"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div><h2>Таблиця прогнозу по категоріях</h2><p>Факт 2025 vs Ціль 2026 (млн ₴)</p></div></div>
+    <div class="table-wrap"><table id="fore-tbl"></table></div>
+  </div>
+</div>
+
+<script>
+const DATA={"d1": {"months": ["Чер'25", "Лип'25", "Сер'25", "Вер'25", "Жов'25", "Лис'25", "Гру'25", "Січ'26", "Лют'26", "Бер'26", "Кві'26", "Тра'26"], "orders": [391, 454, 432, 417, 436, 393, 409, 397, 382, 481, 392, 371], "revenue": [7321.6, 7724.2, 5666.0, 8698.9, 8226.0, 6955.4, 5199.6, 9126.8, 7601.1, 8537.4, 5775.2, 6826.0], "qty": [9542, 10519, 8768, 9401, 10610, 8687, 6308, 11002, 10050, 10486, 7946, 10507]}, "d2": {"months": ["Чер'25", "Лип'25", "Сер'25", "Вер'25", "Жов'25", "Лис'25", "Гру'25", "Січ'26", "Лют'26", "Бер'26", "Кві'26", "Тра'26"], "categories": ["Файли (ендодонтія)", "Бори / Фрези", "Наконечники", "Скалери / УЗ", "Хірургічне обладн.", "Ендомотори", "Фотополімерні лампи", "Рентгени / Візіографи", "Порошки / Полірувальні", "Мікроскопи / Оптика", "Інше"], "revenue": {"Файли (ендодонтія)": [3858.8, 4094.6, 2830.1, 3623.9, 4186.6, 3190.9, 2244.3, 4265.6, 3680.2, 4330.6, 2933.5, 3590.2], "Бори / Фрези": [346.2, 439.9, 599.8, 653.2, 461.6, 397.6, 402.3, 568.1, 498.9, 565.1, 426.4, 352.3], "Наконечники": [532.2, 416.4, 435.0, 325.3, 435.3, 252.1, 351.1, 543.0, 731.0, 713.3, 342.0, 485.9], "Скалери / УЗ": [172.0, 326.4, 140.8, 86.7, 99.5, 195.3, 405.3, 88.3, 36.0, 188.7, 104.8, 283.9], "Хірургічне обладн.": [703.0, 766.6, 398.7, 594.4, 689.7, 947.8, 787.3, 601.1, 1064.5, 1181.0, 987.7, 487.4], "Ендомотори": [149.9, 359.0, 167.0, 254.9, 564.5, 282.0, 370.6, 210.0, 279.8, 402.3, 182.8, 127.8], "Фотополімерні лампи": [11.0, 34.0, 49.4, 90.0, 34.2, 24.0, 72.9, 35.0, 5.4, 0.0, 0.0, 20.0], "Рентгени / Візіографи": [0.0, 146.7, 158.8, 68.9, 34.9, 124.8, 0.0, 139.9, 103.8, 200.7, 120.8, 37.9], "Порошки / Полірувальні": [15.1, 10.8, 5.8, 10.1, 18.3, 12.6, 17.8, 5.6, 11.9, 16.1, 14.2, 25.8], "Мікроскопи / Оптика": [0.0, 0.0, 0.0, 1772.3, 0.0, 390.6, 0.0, 1418.6, 0.0, 0.0, 0.0, 0.0], "Інше": [1503.2, 983.0, 809.2, 1160.2, 1576.7, 1057.3, 466.2, 1160.3, 1110.0, 891.3, 567.4, 1340.5]}, "qty": {"Файли (ендодонтія)": [7036, 7481, 5420, 6691, 7678, 6077, 4137, 8045, 6971, 7870, 5629, 6595], "Бори / Фрези": [1076, 1347, 2090, 1418, 1317, 1055, 1054, 1292, 1467, 1375, 1258, 1139], "Наконечники": [111, 103, 108, 83, 108, 59, 65, 136, 171, 166, 63, 116], "Скалери / УЗ": [20, 57, 29, 13, 4, 22, 33, 16, 7, 7, 5, 49], "Хірургічне обладн.": [10, 12, 6, 9, 11, 14, 12, 9, 16, 19, 13, 8], "Ендомотори": [7, 15, 7, 11, 23, 13, 16, 10, 12, 17, 10, 5], "Фотополімерні лампи": [1, 5, 8, 16, 4, 2, 10, 3, 2, 0, 0, 3], "Рентгени / Візіографи": [0, 3, 3, 1, 1, 3, 0, 2, 2, 3, 3, 1], "Порошки / Полірувальні": [18, 14, 8, 13, 24, 19, 22, 9, 13, 23, 21, 34], "Мікроскопи / Оптика": [0, 0, 0, 4, 0, 1, 0, 3, 0, 0, 0, 0], "Інше": [1231, 1437, 1048, 1082, 1341, 1375, 900, 1401, 1344, 959, 859, 2500]}}, "d3": {"hist_months": ["Чер'25", "Лип'25", "Сер'25", "Вер'25", "Жов'25", "Лис'25", "Гру'25", "Січ'26", "Лют'26", "Бер'26", "Кві'26", "Тра'26"], "fore_months": ["Чер'26", "Лип'26", "Сер'26", "Вер'26", "Жов'26", "Лис'26", "Гру'26"], "categories": ["Файли (ендодонтія)", "Бори / Фрези", "Наконечники", "Скалери / УЗ", "Хірургічне обладн.", "Ендомотори", "Фотополімерні лампи", "Рентгени / Візіографи", "Порошки / Полірувальні", "Мікроскопи / Оптика", "Інше"], "hist_revenue": {"Файли (ендодонтія)": [3858.8, 4094.6, 2830.1, 3623.9, 4186.6, 3190.9, 2244.3, 4265.6, 3680.2, 4330.6, 2933.5, 3590.2], "Бори / Фрези": [346.2, 439.9, 599.8, 653.2, 461.6, 397.6, 402.3, 568.1, 498.9, 565.1, 426.4, 352.3], "Наконечники": [532.2, 416.4, 435.0, 325.3, 435.3, 252.1, 351.1, 543.0, 731.0, 713.3, 342.0, 485.9], "Скалери / УЗ": [172.0, 326.4, 140.8, 86.7, 99.5, 195.3, 405.3, 88.3, 36.0, 188.7, 104.8, 283.9], "Хірургічне обладн.": [703.0, 766.6, 398.7, 594.4, 689.7, 947.8, 787.3, 601.1, 1064.5, 1181.0, 987.7, 487.4], "Ендомотори": [149.9, 359.0, 167.0, 254.9, 564.5, 282.0, 370.6, 210.0, 279.8, 402.3, 182.8, 127.8], "Фотополімерні лампи": [11.0, 34.0, 49.4, 90.0, 34.2, 24.0, 72.9, 35.0, 5.4, 0.0, 0.0, 20.0], "Рентгени / Візіографи": [0.0, 146.7, 158.8, 68.9, 34.9, 124.8, 0.0, 139.9, 103.8, 200.7, 120.8, 37.9], "Порошки / Полірувальні": [15.1, 10.8, 5.8, 10.1, 18.3, 12.6, 17.8, 5.6, 11.9, 16.1, 14.2, 25.8], "Мікроскопи / Оптика": [0.0, 0.0, 0.0, 1772.3, 0.0, 390.6, 0.0, 1418.6, 0.0, 0.0, 0.0, 0.0], "Інше": [1503.2, 983.0, 809.2, 1160.2, 1576.7, 1057.3, 466.2, 1160.3, 1110.0, 891.3, 567.4, 1340.5]}, "fore_revenue_low": {"Файли (ендодонтія)": [4244.7, 4504.1, 3113.1, 3986.3, 4605.3, 3510.0, 2468.8], "Бори / Фрези": [380.8, 483.9, 659.8, 718.6, 507.8, 437.4, 442.5], "Наконечники": [585.4, 458.0, 478.5, 357.8, 478.9, 277.4, 386.3], "Скалери / УЗ": [189.2, 359.1, 154.9, 95.4, 109.4, 214.8, 445.8], "Хірургічне обладн.": [773.3, 843.3, 438.6, 653.8, 758.7, 1042.6, 866.0], "Ендомотори": [164.9, 394.9, 183.7, 280.4, 621.0, 310.2, 407.7], "Фотополімерні лампи": [12.1, 37.4, 54.3, 99.0, 37.6, 26.4, 80.2], "Рентгени / Візіографи": [0.0, 161.4, 174.7, 75.8, 38.4, 137.3, 0.0], "Порошки / Полірувальні": [16.6, 11.8, 6.4, 11.1, 20.2, 13.8, 19.5], "Мікроскопи / Оптика": [0.0, 0.0, 0.0, 1949.5, 0.0, 429.7, 0.0], "Інше": [1653.5, 1081.3, 890.1, 1276.2, 1734.4, 1163.0, 512.9]}, "fore_revenue_high": {"Файли (ендодонтія)": [4630.5, 4913.5, 3396.1, 4348.7, 5024.0, 3829.1, 2693.2], "Бори / Фрези": [415.4, 527.9, 719.8, 783.9, 554.0, 477.1, 482.7], "Наконечники": [638.6, 499.6, 522.0, 390.4, 522.4, 302.6, 421.4], "Скалери / УЗ": [206.4, 391.7, 169.0, 104.1, 119.3, 234.4, 486.4], "Хірургічне обладн.": [843.6, 919.9, 478.4, 713.3, 827.6, 1137.4, 944.8], "Ендомотори": [179.9, 430.8, 200.4, 305.9, 677.4, 338.4, 444.8], "Фотополімерні лампи": [13.2, 40.8, 59.3, 108.0, 41.0, 28.8, 87.5], "Рентгени / Візіографи": [0.0, 176.0, 190.6, 82.7, 41.9, 149.8, 0.0], "Порошки / Полірувальні": [18.1, 12.9, 7.0, 12.1, 22.0, 15.1, 21.3], "Мікроскопи / Оптика": [0.0, 0.0, 0.0, 2126.7, 0.0, 468.7, 0.0], "Інше": [1803.8, 1179.7, 971.0, 1392.3, 1892.1, 1268.7, 559.5]}, "hist_total": [7321.6, 7724.2, 5666.0, 8698.9, 8226.0, 6955.4, 5199.6, 9126.8, 7601.1, 8537.4, 5775.2, 6826.0], "fore_total_low": [8020.4, 8335.1, 6154.1, 9504.0, 8911.6, 7562.4, 5629.6], "fore_total_high": [8749.6, 9092.8, 6713.5, 10368.0, 9721.7, 8249.9, 6141.4]}};
+const CATS=DATA.d2.categories;
+const CAT_COLORS={"Файли (ендодонтія)":"#1B79C0","Бори / Фрези":"#02ABED","Наконечники":"#27AE60","Скалери / УЗ":"#E67E22","Хірургічне обладн.":"#8E44AD","Ендомотори":"#E74C3C","Фотополімерні лампи":"#F39C12","Рентгени / Візіографи":"#16A085","Порошки / Полірувальні":"#95A5A6","Мікроскопи / Оптика":"#2C3E50","Інше":"#BDC3C7"};
+
+// Конвертуємо всі значення тис. -> млн для відображення
+function toM(v){return +(v/1000).toFixed(3);}
+function fmtM(v){return v>=1?(v).toFixed(2)+'M ₴':((v*1000).toFixed(0))+' тис. ₴';}
+function tickM(v){return v>=1?v.toFixed(1)+'M':v>0?(v*1000).toFixed(0)+'K':'0';}
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── DASH 1 ─────────────────────────────────────────────────────
+(function(){
+  const d=DATA.d1;
+  // Convert revenue from тис to млн
+  const revM=d.revenue.map(toM);
+  const totRev=revM.reduce((a,b)=>a+b,0);
+  const totOrd=d.orders.reduce((a,b)=>a+b,0);
+  const bi=revM.indexOf(Math.max(...revM));
+
+  document.getElementById('k1').textContent=totRev.toFixed(2)+'M ₴';
+  document.getElementById('k2').textContent=totOrd.toLocaleString('uk-UA');
+  document.getElementById('k3').textContent='9 652 ₴';
+  document.getElementById('k4').textContent=fmtM(revM[bi]);
+  document.getElementById('k4m').textContent=d.months[bi];
+
+  new Chart(document.getElementById('c1'),{
+    type:'line',
+    data:{labels:d.months,datasets:[{
+      data:revM,borderColor:'#1B79C0',backgroundColor:'rgba(27,121,192,.08)',
+      borderWidth:3,pointBackgroundColor:'#1B79C0',pointRadius:6,pointHoverRadius:8,
+      fill:true,tension:.4,label:'Виручка'
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        label:c=>fmtM(c.parsed.y)
+      }}},
+      scales:{y:{grid:{color:'#EEF2F7'},ticks:{callback:tickM},beginAtZero:false}}
+    }
+  });
+
+  new Chart(document.getElementById('c2'),{type:'bar',data:{labels:d.months,datasets:[{
+    label:'Замовлень',data:d.orders,
+    backgroundColor:d.orders.map((v,i)=>i===bi?'#1B79C0':'#D8F6FF'),
+    borderColor:'#1B79C0',borderWidth:1.5,borderRadius:6
+  }]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y+' замовлень'}}},
+    scales:{y:{grid:{color:'#EEF2F7'},beginAtZero:true}}
+  }});
+
+  new Chart(document.getElementById('c3'),{type:'line',data:{labels:d.months,datasets:[{
+    label:'Одиниць',data:d.qty,borderColor:'#02ABED',backgroundColor:'rgba(2,171,237,.1)',
+    borderWidth:2.5,pointRadius:4,fill:true,tension:.4
+  }]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toLocaleString()+' шт'}}},
+    scales:{y:{grid:{color:'#EEF2F7'}}}
+  }});
+})();
+
+// ── DASH 2 ─────────────────────────────────────────────────────
+let catChart=null;
+(function(){
+  const d=DATA.d2;
+  const totals=CATS.map(c=>({c,rev:d.revenue[c].reduce((a,b)=>a+b,0),qty:d.qty[c].reduce((a,b)=>a+b,0)}));
+  totals.sort((a,b)=>b.rev-a.rev);
+  const grand=totals.reduce((a,b)=>a+b.rev,0);
+  const wrap=document.getElementById('cat-kpis');
+  totals.slice(0,5).forEach(t=>{
+    wrap.innerHTML+=`<div class="kpi" style="border-color:${CAT_COLORS[t.c]||'#1B79C0'}"><div class="kpi-label">${t.c}</div><div class="kpi-val">${toM(t.rev).toFixed(2)}M ₴</div><div class="kpi-sub">${(t.rev/grand*100).toFixed(1)}% від загального</div></div>`;
+  });
+
+  buildCatStack('revenue');
+
+  new Chart(document.getElementById('c5'),{type:'doughnut',
+    data:{labels:CATS,datasets:[{data:CATS.map(c=>d.revenue[c].reduce((a,b)=>a+b,0)),backgroundColor:CATS.map(c=>CAT_COLORS[c]||'#999'),borderWidth:2,borderColor:'#fff',hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const v=c.parsed;const tot=c.dataset.data.reduce((a,b)=>a+b,0);return `${c.label}: ${toM(v).toFixed(2)}M ₴ (${(v/tot*100).toFixed(1)}%)`;}}}}
+  }});
+
+  let tbl='<table><thead><tr><th>Категорія</th><th>Виручка</th><th>%</th></tr></thead><tbody>';
+  totals.forEach(t=>{tbl+=`<tr><td class="td-cat" style="border-left:3px solid ${CAT_COLORS[t.c]||'#999'};padding-left:10px">${t.c}</td><td class="td-num">${toM(t.rev).toFixed(2)}M ₴</td><td class="td-num">${(t.rev/grand*100).toFixed(1)}%</td></tr>`;});
+  tbl+='</tbody></table>';
+  document.getElementById('cat-tbl').innerHTML=tbl;
+})();
+
+function buildCatStack(mode){
+  if(catChart)catChart.destroy();
+  const d=DATA.d2;
+  // For revenue mode, convert to M; for qty keep as is
+  const datasets=CATS.map(c=>({
+    label:c,
+    data:mode==='revenue'?d.revenue[c].map(toM):d.qty[c],
+    backgroundColor:CAT_COLORS[c]||'#999',borderWidth:0,borderRadius:2
+  }));
+  catChart=new Chart(document.getElementById('c4'),{type:'bar',
+    data:{labels:d.months,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+        tooltip:{callbacks:{label:c=>mode==='revenue'?`${c.dataset.label}: ${fmtM(c.parsed.y)}`:`${c.dataset.label}: ${c.parsed.y} шт`}}
+      },
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#EEF2F7'},ticks:{callback:v=>mode==='revenue'?tickM(v):v}}}
+    }
+  });
+}
+
+function setCatMode(mode,btn){
+  document.querySelectorAll('#dash2 .toggle-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildCatStack(mode);
+}
+
+// ── DASH 3 ─────────────────────────────────────────────────────
+(function(){
+  const d=DATA.d3;
+  const fLowSum=d.fore_total_low.reduce((a,b)=>a+b,0);
+  const fHighSum=d.fore_total_high.reduce((a,b)=>a+b,0);
+  const histSum=d.hist_total.slice(0,7).reduce((a,b)=>a+b,0);
+  document.getElementById('f1').textContent=fmtM(toM(fLowSum));
+  document.getElementById('f2').textContent=fmtM(toM(fHighSum));
+  document.getElementById('f3').textContent=fmtM(toM(histSum));
+
+  const allM=[...d.hist_months,...d.fore_months];
+  const histF=[...d.hist_total.map(toM),...Array(d.fore_months.length).fill(null)];
+  const fLow=[...Array(d.hist_months.length).fill(null),...d.fore_total_low.map(toM)];
+  const fHigh=[...Array(d.hist_months.length).fill(null),...d.fore_total_high.map(toM)];
+  fLow[d.hist_months.length-1]=toM(d.hist_total[d.hist_months.length-1]);
+  fHigh[d.hist_months.length-1]=toM(d.hist_total[d.hist_months.length-1]);
+
+  new Chart(document.getElementById('c6'),{type:'line',
+    data:{labels:allM,datasets:[
+      {label:'Факт',data:histF,borderColor:'#1B79C0',backgroundColor:'rgba(27,121,192,.1)',borderWidth:3,pointRadius:5,fill:true,tension:.35,spanGaps:false},
+      {label:'Прогноз +20%',data:fHigh,borderColor:'#27AE60',backgroundColor:'rgba(39,174,96,.12)',borderWidth:2.5,borderDash:[6,3],pointRadius:4,fill:2,tension:.35,spanGaps:false},
+      {label:'Прогноз +10%',data:fLow,borderColor:'rgba(39,174,96,.5)',backgroundColor:'transparent',borderWidth:1.5,borderDash:[4,4],pointRadius:3,tension:.35,spanGaps:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{boxWidth:14,font:{size:12}}},
+        tooltip:{callbacks:{label:c=>c.parsed.y!=null?`${c.dataset.label}: ${fmtM(c.parsed.y)}`:''}}
+      },
+      scales:{x:{grid:{color:'#EEF2F7'}},y:{grid:{color:'#EEF2F7'},ticks:{callback:tickM}}}
+    }
+  });
+
+  const midDS=CATS.map(c=>({
+    label:c,
+    data:d.fore_months.map((_,i)=>toM(((d.fore_revenue_low[c][i]||0)+(d.fore_revenue_high[c][i]||0))/2)),
+    backgroundColor:CAT_COLORS[c]||'#999',borderWidth:0,borderRadius:2
+  }));
+  new Chart(document.getElementById('c7'),{type:'bar',
+    data:{labels:d.fore_months,datasets:midDS},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+        tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtM(c.parsed.y)}`}}
+      },
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#EEF2F7'},ticks:{callback:tickM}}}
+    }
+  });
+
+  const HM=["Чер'25","Лип'25","Сер'25","Вер'25","Жов'25","Лис'25","Гру'25"];
+  let tbl='<thead><tr><th>Категорія</th>';
+  HM.forEach(m=>tbl+=`<th>Факт ${m}</th>`);
+  d.fore_months.forEach(m=>tbl+=`<th style="background:#1A5276">+10% ${m}</th><th style="background:#1A7340">+20% ${m}</th>`);
+  tbl+='</tr></thead><tbody>';
+  CATS.forEach(c=>{
+    const hv=[0,1,2,3,4,5,6].map(i=>toM(d.hist_revenue[c]?.[i]||0));
+    const lv=(d.fore_revenue_low[c]||Array(7).fill(0)).map(toM);
+    const hiv=(d.fore_revenue_high[c]||Array(7).fill(0)).map(toM);
+    tbl+=`<tr><td class="td-cat" style="border-left:3px solid ${CAT_COLORS[c]||'#999'};padding-left:8px">${c}</td>`;
+    hv.forEach(v=>tbl+=`<td class="td-num">${v.toFixed(2)}M</td>`);
+    lv.forEach((l,i)=>{
+      tbl+=`<td class="td-num" style="background:#EBF5FB;color:#1B79C0">${l.toFixed(2)}M</td>`;
+      tbl+=`<td class="td-num" style="background:#E8F8EF;color:#1A7340;font-weight:800">${hiv[i].toFixed(2)}M</td>`;
+    });
+    tbl+='</tr>';
+  });
+  let totHtml='<tr style="background:#EEF2F7;font-weight:800"><td>ВСЬОГО</td>';
+  [0,1,2,3,4,5,6].forEach(i=>{
+    const v=toM(CATS.reduce((a,c)=>a+(d.hist_revenue[c]?.[i]||0),0));
+    totHtml+=`<td class="td-num">${v.toFixed(2)}M</td>`;
+  });
+  d.fore_months.forEach((_,i)=>{
+    const tl=toM(CATS.reduce((a,c)=>a+(d.fore_revenue_low[c]?.[i]||0),0));
+    const th=toM(CATS.reduce((a,c)=>a+(d.fore_revenue_high[c]?.[i]||0),0));
+    totHtml+=`<td class="td-num" style="background:#EBF5FB;color:#1B79C0">${tl.toFixed(2)}M</td>`;
+    totHtml+=`<td class="td-num" style="background:#D5F5E3;color:#1A7340">${th.toFixed(2)}M</td>`;
+  });
+  totHtml+='</tr>';
+  tbl+=totHtml+'</tbody>';
+  document.getElementById('fore-tbl').innerHTML=tbl;
+})();
+</script>
+</body>
+</html>
